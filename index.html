@@ -1,2 +1,1300 @@
-# app-de-estudio
-pues es una app que convina varios temporazadores en los q tipoo, practicas la memorizacion, lees, cierras el libro, hay un espacio donde repites intantaneamente si lo logras pasar el tiempo q te demostaste multiplicado con un numero configurable va a tener coo que un descanso, dspues fuerzas al cerebro a recordar
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Study Lab"/>
+<meta name="theme-color" content="#060f1c"/>
+<title>Study Lab</title>
+<style>
+/* ─── VARIABLES ─────────────────────── */
+:root {
+  --bg: #060f1c;
+  --s1: #0b1929;
+  --s2: #0f2035;
+  --border: rgba(255,255,255,.09);
+  --text: #ddeeff;
+  --muted: #4e6f8a;
+  --soft: #8aaec6;
+  --cyan: #2de8f4;
+  --blue: #3a8cff;
+  --green: #1ecf74;
+  --amber: #f5a623;
+  --red: #ff3f60;
+  --r: 16px;
+  --nav-h: 62px;
+  --safe: env(safe-area-inset-bottom, 0px);
+}
+
+/* ─── RESET ─────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { height: 100%; }
+body {
+  height: 100%; overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-size: 16px; background: var(--bg); color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── APP SHELL ─────────────────────── */
+#app { height: 100%; display: flex; flex-direction: column; }
+
+/* ─── SCREENS ───────────────────────── */
+.screen {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding-bottom: calc(var(--nav-h) + var(--safe) + 16px);
+  display: none; flex-direction: column;
+  -webkit-overflow-scrolling: touch;
+}
+.screen.active { display: flex; }
+.screen::-webkit-scrollbar { display: none; }
+
+/* ─── BOTTOM NAV ────────────────────── */
+#nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 90;
+  height: calc(var(--nav-h) + var(--safe));
+  padding-bottom: var(--safe);
+  background: rgba(6,15,28,.97);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: stretch;
+  backdrop-filter: blur(20px);
+}
+.nb {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 5px; border: 0; background: transparent;
+  color: var(--muted); font-size: 11px; font-family: inherit;
+  cursor: pointer; transition: color .2s; position: relative;
+  padding-bottom: 2px;
+}
+.nb.on { color: var(--cyan); }
+.nb svg { width: 22px; height: 22px; }
+.nb-dot {
+  position: absolute; top: 10px; right: calc(50% - 18px);
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--red); display: none;
+}
+.nb-dot.on { display: block; }
+
+/* ─── SHARED COMPONENTS ─────────────── */
+.page-hero {
+  padding: 52px 22px 24px;
+  border-bottom: 1px solid var(--border);
+}
+.eyebrow { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--cyan); margin-bottom: 8px; }
+.page-title { font-size: 30px; font-weight: 700; letter-spacing: -.5px; }
+.page-sub { font-size: 14px; color: var(--muted); margin-top: 6px; }
+
+.section { padding: 24px 22px 0; }
+.section-label {
+  font-size: 11px; letter-spacing: .13em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 14px;
+  display: flex; align-items: center; gap: 10px;
+}
+.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+.card {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--r);
+}
+
+/* ─── BUTTONS ───────────────────────── */
+.btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  border: 0; border-radius: var(--r); font-family: inherit;
+  font-weight: 600; cursor: pointer; transition: opacity .15s, transform .12s;
+  white-space: nowrap;
+}
+.btn:active { transform: scale(.95); opacity: .85; }
+.btn-primary { background: var(--cyan); color: #040c18; }
+.btn-ghost { background: var(--s1); color: var(--text); border: 1px solid var(--border); }
+.btn-green { background: var(--green); color: #030e09; }
+.btn-amber { background: var(--amber); color: #060f1c; }
+.btn-red-soft { background: rgba(255,63,96,.12); color: var(--red); border: 1px solid rgba(255,63,96,.2); }
+
+/* ─── TOGGLE ────────────────────────── */
+.toggle { position: relative; width: 46px; height: 28px; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-track {
+  position: absolute; inset: 0; background: rgba(255,255,255,.1);
+  border-radius: 14px; cursor: pointer; transition: background .2s;
+}
+.toggle-track::after {
+  content: ''; position: absolute; width: 22px; height: 22px;
+  background: #fff; border-radius: 50%; top: 3px; left: 3px;
+  transition: transform .22s;
+}
+.toggle input:checked + .toggle-track { background: var(--cyan); }
+.toggle input:checked + .toggle-track::after { transform: translateX(18px); }
+
+/* ─── STEPPER (Pomodoro) ─────────────── */
+.stepper {
+  display: flex; align-items: stretch;
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--r); overflow: hidden; height: 60px;
+}
+.stepper-btn {
+  width: 64px; flex-shrink: 0; border: 0; background: transparent;
+  color: var(--text); font-size: 26px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
+}
+.stepper-btn:active { background: rgba(46,232,244,.1); }
+.stepper-val {
+  flex: 1; text-align: center; font-size: 26px; font-weight: 700;
+  background: transparent; color: var(--text); border: 0;
+  border-left: 1px solid var(--border); border-right: 1px solid var(--border);
+  font-family: inherit; outline: none; min-width: 0;
+}
+
+/* ─── MULT GRID ─────────────────────── */
+.mult-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mult-card {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 14px 16px;
+}
+.mult-label { font-size: 12px; color: var(--muted); margin-bottom: 8px; display: block; }
+.mult-input {
+  width: 100%; background: transparent; border: 0;
+  color: var(--text); font-size: 22px; font-weight: 700;
+  font-family: inherit; outline: none;
+}
+
+/* ─── TOPIC FORM ─────────────────────── */
+.topic-form {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--r); overflow: hidden; margin-bottom: 12px;
+}
+.topic-name-input {
+  width: 100%; background: transparent; border: 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--text); font-size: 16px; font-family: inherit;
+  padding: 16px; outline: none;
+}
+.topic-name-input::placeholder { color: var(--muted); }
+.topic-bottom-row {
+  display: flex; align-items: center; height: 54px;
+}
+.topic-est-wrap {
+  flex: 1; display: flex; align-items: center; gap: 8px;
+  padding: 0 16px;
+}
+.topic-est-label { font-size: 13px; color: var(--muted); white-space: nowrap; }
+.topic-est-input {
+  width: 50px; background: transparent; border: 0;
+  color: var(--text); font-size: 18px; font-weight: 700;
+  font-family: inherit; outline: none; text-align: center;
+}
+.topic-est-unit { font-size: 13px; color: var(--muted); }
+.topic-add-btn {
+  width: 54px; height: 54px; flex-shrink: 0;
+  border: 0; border-left: 1px solid var(--border);
+  background: rgba(45,232,244,.1); color: var(--cyan);
+  font-size: 26px; cursor: pointer; transition: background .15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.topic-add-btn:active { background: rgba(45,232,244,.2); }
+
+/* ─── TOPIC LIST ─────────────────────── */
+.topic-item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 16px; margin-bottom: 8px;
+}
+.topic-bullet { width: 8px; height: 8px; border-radius: 50%; background: var(--cyan); flex-shrink: 0; }
+.topic-info { flex: 1; min-width: 0; }
+.topic-info-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topic-info-est { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.topic-del {
+  width: 34px; height: 34px; flex-shrink: 0;
+  border: 0; border-radius: 8px;
+  background: rgba(255,63,96,.1); color: var(--red);
+  font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
+}
+.topic-del:active { background: rgba(255,63,96,.25); }
+
+/* ─── START BUTTON ───────────────────── */
+.start-btn {
+  margin: 20px 22px 0;
+  height: 58px; border-radius: var(--r);
+  font-size: 17px; font-weight: 700;
+}
+
+/* ─── SESSION SCREEN ─────────────────── */
+.sess-top {
+  padding: 20px 22px 0;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.phase-pill {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 14px; border-radius: 20px;
+  background: rgba(45,232,244,.07); border: 1px solid rgba(45,232,244,.18);
+  font-size: 12px; font-weight: 600; color: var(--cyan);
+}
+.phase-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); animation: blink 1.8s infinite; }
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: .2; } }
+.pom-badge { font-size: 13px; color: var(--soft); }
+.pom-badge b { color: var(--text); font-weight: 700; }
+
+/* Ring timer */
+.ring-wrap {
+  width: 210px; height: 210px; margin: 22px auto 0;
+  position: relative; flex-shrink: 0;
+}
+.ring-wrap svg { display: block; transform: rotate(-90deg); }
+.r-bg { fill: none; stroke: rgba(255,255,255,.06); stroke-width: 6; }
+.r-arc { fill: none; stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset .5s linear, stroke .4s; }
+.ring-inner {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center; pointer-events: none;
+}
+.ring-time { font-size: 40px; font-weight: 700; letter-spacing: -2px; line-height: 1; }
+.ring-sub { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-top: 5px; }
+
+/* Current topic card */
+.topic-card {
+  margin: 18px 22px 0;
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 18px;
+}
+.tc-num { font-size: 12px; color: var(--cyan); font-weight: 600; margin-bottom: 5px; }
+.tc-name { font-size: 21px; font-weight: 700; line-height: 1.25; margin-bottom: 14px; }
+.tc-meta { display: flex; gap: 18px; margin-bottom: 14px; }
+.tc-meta-item { font-size: 13px; color: var(--muted); }
+.tc-meta-item b { color: var(--text); font-weight: 600; }
+.progress-bg { height: 5px; background: rgba(255,255,255,.07); border-radius: 3px; overflow: hidden; }
+.progress-fg { height: 100%; border-radius: 3px; transition: width .5s, background .3s; }
+
+/* F3 Part 1 */
+.f3-card {
+  margin: 18px 22px 0;
+  background: var(--s1); border: 1px solid rgba(245,166,35,.2);
+  border-radius: var(--r); padding: 22px 20px;
+}
+.f3-label { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--amber); margin-bottom: 10px; }
+.f3-big { font-size: 68px; font-weight: 800; letter-spacing: -3px; line-height: 1; color: var(--amber); text-align: center; }
+.f3-suggestion {
+  margin: 14px 0 0; padding: 12px 14px;
+  background: rgba(245,166,35,.07); border-radius: 10px;
+  font-size: 13px; color: var(--amber); line-height: 1.5;
+}
+
+/* Action rows */
+.act-row { display: flex; gap: 10px; margin: 14px 22px 0; }
+.act { height: 52px; border-radius: var(--r); font-size: 15px; font-weight: 600; font-family: inherit; }
+
+/* ─── SHEETS ─────────────────────────── */
+.overlay {
+  position: fixed; inset: 0; z-index: 200;
+  display: none; align-items: flex-end; justify-content: center;
+  background: rgba(0,0,0,.72); backdrop-filter: blur(8px);
+}
+.overlay.on { display: flex; }
+.sheet {
+  width: 100%; max-width: 520px;
+  background: #0d1e33; border: 1px solid var(--border);
+  border-radius: 22px 22px 0 0;
+  padding: 16px 22px calc(var(--safe) + 24px);
+  max-height: 88vh; overflow-y: auto;
+  animation: slideUp .22s ease;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.sheet-handle { width: 36px; height: 4px; background: rgba(255,255,255,.15); border-radius: 2px; margin: 0 auto 18px; }
+.sheet-title { font-size: 19px; font-weight: 700; margin-bottom: 4px; }
+.sheet-sub { font-size: 14px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+
+/* Score grid */
+.score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.score-btn {
+  padding: 18px 10px; border-radius: 13px; border: 0;
+  font-family: inherit; font-size: 20px; font-weight: 700;
+  cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px;
+  transition: transform .12s;
+}
+.score-btn:active { transform: scale(.93); }
+.score-btn small { font-size: 12px; font-weight: 400; opacity: .85; }
+.s100 { background: linear-gradient(135deg, #1ecf74, #14a85a); color: #030e09; }
+.s75  { background: linear-gradient(135deg, #3a8cff, #1a6ae0); color: #fff; }
+.s50  { background: linear-gradient(135deg, #f5a623, #d48018); color: #060f1c; }
+.s25  { background: rgba(255,63,96,.15); color: #ff8fa3; border: 1px solid rgba(255,63,96,.3); }
+.s0   { background: linear-gradient(135deg, #ff3f60, #cc1a38); color: #fff; grid-column: span 2; }
+
+/* Reason textarea */
+.reason-ta {
+  width: 100%; background: rgba(255,255,255,.04);
+  border: 1px solid var(--border); border-radius: 12px;
+  color: var(--text); font-family: inherit; font-size: 15px;
+  padding: 14px; outline: none; resize: vertical; min-height: 90px;
+  line-height: 1.5;
+}
+.reason-ta:focus { border-color: rgba(45,232,244,.4); }
+
+/* Sheet buttons */
+.sheet-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.sheet-btn { height: 52px; border-radius: 13px; font-size: 15px; font-weight: 600; font-family: inherit; border: 0; cursor: pointer; transition: opacity .15s; }
+.sheet-btn:active { opacity: .8; }
+.sheet-btn-primary { background: var(--cyan); color: #040c18; }
+.sheet-btn-ghost { background: rgba(255,255,255,.07); color: var(--text); border: 1px solid var(--border); }
+.sheet-btn-green { background: var(--green); color: #030e09; }
+
+/* ─── REPORT ─────────────────────────── */
+.rep-hero { padding: 44px 22px 20px; border-bottom: 1px solid var(--border); }
+.rep-title { font-size: 26px; font-weight: 700; margin-bottom: 14px; }
+.rep-btns { display: flex; gap: 8px; }
+.rbtn { padding: 10px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; font-family: inherit; border: 0; cursor: pointer; transition: opacity .15s; }
+.rbtn:active { opacity: .8; }
+.rbtn-ghost { background: var(--s1); color: var(--text); border: 1px solid var(--border); }
+.rbtn-cyan { background: var(--cyan); color: #040c18; }
+
+.rep-body { padding: 18px 22px; display: flex; flex-direction: column; gap: 14px; }
+
+.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.kpi { background: var(--s1); border: 1px solid var(--border); border-radius: 12px; padding: 12px 8px; text-align: center; }
+.kpi-val { font-size: 22px; font-weight: 700; line-height: 1; }
+.kpi-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-top: 4px; }
+
+.rsec { background: var(--s1); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+.rsec-head { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+.rsec-icon { font-size: 16px; }
+.rsec-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--soft); }
+
+.rrow { display: flex; align-items: flex-start; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,.04); gap: 10px; }
+.rrow:last-child { border-bottom: none; }
+.rrow-lbl { font-size: 13px; color: var(--muted); flex: 1; }
+.rrow-val { font-size: 13px; font-weight: 700; text-align: right; }
+
+.topic-result { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,.04); }
+.topic-result:last-child { border-bottom: none; }
+.tr-name { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+.chip-gray { background: rgba(255,255,255,.07); color: var(--soft); }
+.chip-green { background: rgba(30,207,116,.12); color: var(--green); border: 1px solid rgba(30,207,116,.25); }
+.chip-blue { background: rgba(58,140,255,.12); color: var(--blue); border: 1px solid rgba(58,140,255,.25); }
+.chip-amber { background: rgba(245,166,35,.12); color: var(--amber); border: 1px solid rgba(245,166,35,.25); }
+.chip-red { background: rgba(255,63,96,.12); color: var(--red); border: 1px solid rgba(255,63,96,.25); }
+.tr-reason { font-size: 12px; color: var(--muted); font-style: italic; margin-top: 6px; }
+
+.pbar-row { display: flex; align-items: center; gap: 10px; padding: 11px 16px; border-bottom: 1px solid rgba(255,255,255,.04); }
+.pbar-row:last-child { border-bottom: none; }
+.pbar-label { font-size: 12px; color: var(--muted); width: 68px; flex-shrink: 0; }
+.pbar-bg { flex: 1; height: 6px; background: rgba(255,255,255,.07); border-radius: 3px; overflow: hidden; }
+.pbar-fill { height: 100%; border-radius: 3px; }
+.pbar-pct { font-size: 12px; font-weight: 700; width: 38px; text-align: right; }
+
+.rec-row { display: flex; gap: 10px; padding: 13px 16px; border-bottom: 1px solid rgba(255,255,255,.04); }
+.rec-row:last-child { border-bottom: none; }
+.rec-icon { font-size: 18px; flex-shrink: 0; }
+.rec-text { font-size: 13px; line-height: 1.6; color: var(--soft); }
+.rec-text strong { color: var(--cyan); }
+
+.fail-row { padding: 13px 16px; border-bottom: 1px solid rgba(255,255,255,.04); }
+.fail-row:last-child { border-bottom: none; }
+.fail-name { font-size: 14px; font-weight: 700; color: var(--red); margin-bottom: 4px; }
+.fail-reason { font-size: 12px; color: var(--muted); font-style: italic; }
+
+/* ─── PRINT ─────────────────────────── */
+@media print {
+  #nav, .act-row, .sess-top, .rep-btns, .start-btn, .overlay { display: none !important; }
+  html, body { overflow: visible !important; height: auto !important; background: #fff !important; color: #111 !important; }
+  .screen { display: flex !important; padding: 0 !important; overflow: visible !important; }
+  #sReport { display: flex !important; }
+  #sConfig, #sSession { display: none !important; }
+  .rsec, .kpi, .rrow, .topic-result, .rec-row, .fail-row, .pbar-row { background: #fff !important; border-color: #ddd !important; color: #111 !important; }
+  .rsec-title { color: #444 !important; } .rrow-lbl { color: #666 !important; }
+  .chip-green { background: #d1fae5 !important; color: #065f46 !important; }
+  .chip-red { background: #fee2e2 !important; color: #991b1b !important; }
+  .chip-amber { background: #fef3c7 !important; color: #92400e !important; }
+  .chip-blue { background: #dbeafe !important; color: #1e40af !important; }
+  .chip-gray { background: #f3f4f6 !important; color: #374151 !important; }
+  .rec-text { color: #333 !important; } .rec-text strong { color: #0066aa !important; }
+  .fail-name { color: #dc2626 !important; }
+  .pbar-fill { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ════════ CONFIG SCREEN ════════ -->
+<div id="sConfig" class="screen active">
+
+  <div class="page-hero">
+    <div class="eyebrow">Active Recall</div>
+    <div class="page-title">Study Lab</div>
+    <div class="page-sub">Configura tu sesión de estudio</div>
+  </div>
+
+  <!-- Pomodoro -->
+  <div class="section">
+    <div class="section-label">Duración Pomodoro</div>
+    <div class="stepper">
+      <button class="stepper-btn" id="pomMinus" type="button">−</button>
+      <input class="stepper-val" id="pomVal" type="number" value="50" min="1" inputmode="numeric"/>
+      <button class="stepper-btn" id="pomPlus" type="button">+</button>
+    </div>
+    <p style="text-align:center;font-size:12px;color:var(--muted);margin-top:8px">minutos de sesión principal</p>
+  </div>
+
+  <!-- Multiplicadores -->
+  <div class="section">
+    <div class="section-label">Multiplicadores de tiempo</div>
+    <div class="mult-grid">
+      <div class="mult-card">
+        <span class="mult-label">F2 — Recall instantáneo</span>
+        <input class="mult-input" id="mF2" type="number" step="0.1" min="0.1" value="1.0" inputmode="decimal"/>
+      </div>
+      <div class="mult-card">
+        <span class="mult-label">F3 — Recall espaciado</span>
+        <input class="mult-input" id="mF3" type="number" step="0.1" min="0.1" value="1.0" inputmode="decimal"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- Opciones -->
+  <div class="section">
+    <div class="section-label">Opciones</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;">
+      <div>
+        <div style="font-size:15px;font-weight:600;">Auto-avanzar en Fase 1</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:3px;">Cambia de tema al acabar el estimado</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="autoAdv" checked/>
+        <span class="toggle-track"></span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Temas -->
+  <div class="section">
+    <div class="section-label">Temas de estudio</div>
+
+    <div class="topic-form">
+      <input class="topic-name-input" id="tNameIn" type="text" placeholder="Nombre del tema…" autocomplete="off"/>
+      <div class="topic-bottom-row">
+        <div class="topic-est-wrap">
+          <span class="topic-est-label">Estimado:</span>
+          <input class="topic-est-input" id="tEstIn" type="number" min="1" value="5" inputmode="numeric"/>
+          <span class="topic-est-unit">min</span>
+        </div>
+        <button class="topic-add-btn" id="addBtn" type="button">+</button>
+      </div>
+    </div>
+
+    <div id="topicList">
+      <div id="emptyMsg" style="text-align:center;padding:18px;font-size:13px;color:var(--muted);">Sin temas todavía — agrega el primero arriba</div>
+    </div>
+  </div>
+
+  <button class="btn btn-primary start-btn act" id="startBtn" type="button">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+    Iniciar sesión
+  </button>
+
+  <div id="installArea" style="margin:12px 22px 0;"></div>
+  <div style="height:8px;"></div>
+
+</div><!-- /sConfig -->
+
+
+<!-- ════════ SESSION SCREEN ════════ -->
+<div id="sSession" class="screen">
+
+  <div class="sess-top">
+    <div class="phase-pill">
+      <div class="phase-dot"></div>
+      <span id="phaseLabel">Fase 1</span>
+    </div>
+    <div class="pom-badge">⏱ <b id="pomLeft">--:--</b></div>
+  </div>
+
+  <!-- Ring -->
+  <div class="ring-wrap">
+    <svg width="210" height="210" viewBox="0 0 210 210">
+      <circle class="r-bg" cx="105" cy="105" r="92"/>
+      <circle class="r-arc" id="rArc" cx="105" cy="105" r="92"
+        stroke-dasharray="578.05" stroke-dashoffset="0" stroke="var(--cyan)"/>
+    </svg>
+    <div class="ring-inner">
+      <div class="ring-time" id="rTime">0:00</div>
+      <div class="ring-sub" id="rSub">restante</div>
+    </div>
+  </div>
+
+  <!-- Topic card -->
+  <div class="topic-card" id="topicCard">
+    <div class="tc-num" id="tcNum">Tema 1 / 1</div>
+    <div class="tc-name" id="tcName">—</div>
+    <div class="tc-meta">
+      <div class="tc-meta-item">Est: <b id="tcEst">—</b></div>
+      <div class="tc-meta-item">Tiempo: <b id="tcEl">0:00</b></div>
+    </div>
+    <div class="progress-bg">
+      <div class="progress-fg" id="tcBar" style="width:0%;background:var(--cyan);"></div>
+    </div>
+  </div>
+
+  <!-- F3 Part 1 card -->
+  <div class="f3-card" id="f3Card" style="display:none;">
+    <div class="f3-label">Pausa productiva · Olvido activo</div>
+    <div class="f3-big" id="f3Big">0:00</div>
+    <div class="f3-suggestion" id="f3Sugg">—</div>
+
+    <div class="act-row" style="margin:14px 0 0;">
+      <button class="btn btn-amber act" id="f3StartBtn" style="flex:1;height:50px;" type="button">Iniciar pausa</button>
+      <button class="btn btn-ghost act" id="f3PauseBtn" style="flex:1;height:50px;" type="button">Pausar</button>
+    </div>
+
+    <div style="margin-top:12px;">
+      <select id="f3Mode" style="width:100%;background:var(--s2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:13px 14px;font-family:inherit;font-size:14px;outline:none;-webkit-appearance:none;">
+        <option value="manual">Al terminar → esperar</option>
+        <option value="auto">Al terminar → ir a Parte 2</option>
+      </select>
+    </div>
+
+    <button class="btn btn-primary act" id="f3ContBtn" type="button"
+      style="display:none;width:100%;height:50px;margin-top:12px;">
+      Continuar → Parte 2
+    </button>
+  </div>
+
+  <!-- Nav controls -->
+  <div class="act-row" id="navRow">
+    <button class="btn btn-ghost act" id="btnPrev" type="button" style="flex:.7;height:52px;">←</button>
+    <button class="btn btn-primary act" id="btnNext" type="button" style="flex:2;height:52px;">Siguiente →</button>
+  </div>
+  <div class="act-row">
+    <button class="btn btn-ghost act" id="btnForceF2" type="button" style="flex:1;height:46px;font-size:13px;">Forzar F2</button>
+    <button class="btn btn-red-soft act" id="btnStop" type="button" style="flex:1;height:46px;font-size:13px;">Detener</button>
+  </div>
+  <div style="height:8px;"></div>
+
+</div><!-- /sSession -->
+
+
+<!-- ════════ REPORT SCREEN ════════ -->
+<div id="sReport" class="screen">
+  <div class="rep-hero">
+    <div class="rep-title">Informe de sesión</div>
+    <div class="rep-btns">
+      <button class="rbtn rbtn-ghost" id="csvBtn" type="button">⬇ CSV</button>
+      <button class="rbtn rbtn-cyan" id="pdfBtn" type="button">📄 PDF</button>
+    </div>
+  </div>
+  <div class="rep-body" id="repBody">
+    <div style="text-align:center;padding:40px 0;font-size:14px;color:var(--muted);">
+      Completa al menos una fase para ver el informe.
+    </div>
+  </div>
+</div><!-- /sReport -->
+
+</div><!-- /app -->
+
+<!-- ════════ NAV ════════ -->
+<nav id="nav">
+  <button class="nb on" data-screen="sConfig" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.07 4.93A10 10 0 0 0 5 5.35M4.93 19.07A10 10 0 0 0 19 18.65M12 2v2m0 18v-2M2 12H4m18 0h-2"/>
+    </svg>
+    Config
+  </button>
+  <button class="nb" data-screen="sSession" type="button">
+    <div class="nb-dot" id="sPip"></div>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"/>
+      <polyline points="12 6 12 12 16 14"/>
+    </svg>
+    Sesión
+  </button>
+  <button class="nb" data-screen="sReport" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="16" y1="13" x2="8" y2="13"/>
+      <line x1="16" y1="17" x2="8" y2="17"/>
+    </svg>
+    Informe
+  </button>
+</nav>
+
+<!-- ════════ OVERLAYS ════════ -->
+
+<!-- Recall -->
+<div class="overlay" id="ovRecall">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">¿Recuerdas?</div>
+    <div class="sheet-sub" id="recallName">—</div>
+    <div class="score-grid">
+      <button class="score-btn s100" data-v="100" type="button">100%<small>Todo claro ✓</small></button>
+      <button class="score-btn s75"  data-v="75"  type="button">75%<small>Casi todo ✓</small></button>
+      <button class="score-btn s50"  data-v="50"  type="button">50%<small>La mitad</small></button>
+      <button class="score-btn s25"  data-v="25"  type="button">25%<small>Poco ✗</small></button>
+      <button class="score-btn s0"   data-v="0"   type="button">0%<small>Nada — no recordé</small></button>
+    </div>
+    <button class="btn btn-ghost" id="recallCancel" type="button"
+      style="width:100%;height:48px;margin-top:12px;border-radius:12px;font-size:14px;font-weight:600;">Cancelar</button>
+  </div>
+</div>
+
+<!-- Reason -->
+<div class="overlay" id="ovReason">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">¿Por qué fallaste?</div>
+    <div class="sheet-sub">Opcional — mejora tus recomendaciones</div>
+    <textarea class="reason-ta" id="reasonTa" placeholder='Ej: "me distraje", "no repassé antes"...'></textarea>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <button class="sheet-btn sheet-btn-ghost" id="reasonSkip" type="button" style="flex:1;">Omitir</button>
+      <button class="sheet-btn sheet-btn-primary" id="reasonSave" type="button" style="flex:2;">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- F2 summary -->
+<div class="overlay" id="ovF2">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Resumen Fase 2</div>
+    <div id="f2Body" style="font-size:14px;color:var(--muted);margin-bottom:14px;"></div>
+    <div id="f2Fails" style="margin-bottom:16px;"></div>
+    <div class="sheet-actions">
+      <button class="sheet-btn sheet-btn-primary" id="f2ToF3" type="button">Continuar → Fase 3</button>
+      <button class="sheet-btn sheet-btn-green" id="f2ReMem" type="button">Re-memorizar fallos</button>
+      <button class="sheet-btn sheet-btn-ghost" id="f2Close" type="button">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Final -->
+<div class="overlay" id="ovFinal">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">¡Sesión completada! 🎉</div>
+    <div id="finalBody" style="font-size:14px;color:var(--muted);margin-bottom:14px;"></div>
+    <div id="finalFails" style="margin-bottom:16px;"></div>
+    <div class="sheet-actions">
+      <button class="sheet-btn sheet-btn-primary" id="finalReport" type="button">Ver informe</button>
+      <button class="sheet-btn sheet-btn-ghost" id="finalPdf" type="button">📄 Guardar PDF</button>
+      <button class="sheet-btn sheet-btn-green" id="finalReMem" type="button">Re-memorizar fallos</button>
+      <button class="sheet-btn sheet-btn-ghost" id="finalRepeat" type="button" style="font-size:13px;">Nueva sesión</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─── UTIL ──────────────────────────── */
+const $ = id => document.getElementById(id);
+const N = () => Date.now();
+const esc = s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+
+function mmss(ms) {
+  if (ms < 0) ms = 0;
+  const s = Math.ceil(ms / 1000), m = Math.floor(s / 60), ss = s % 60;
+  return m + ':' + String(ss).padStart(2, '0');
+}
+function hms(ms) {
+  if (ms < 0) ms = 0;
+  const s = Math.floor(ms/1000)%60, m = Math.floor(ms/60000)%60, h = Math.floor(ms/3600000);
+  return h ? (h+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')) : (m+':'+String(s).padStart(2,'0'));
+}
+function fmt(s) {
+  if (s === undefined || s === null || s === '') return '—';
+  s = Math.round(Number(s));
+  if (s < 60) return s + 's';
+  const m = Math.floor(s/60), r = s % 60;
+  return r === 0 ? m + 'm' : m + 'm ' + r + 's';
+}
+function scoreColor(p) { return p >= 75 ? 'var(--green)' : p >= 50 ? 'var(--amber)' : 'var(--red)'; }
+function scoreLabel(p) {
+  if (p === 100) return '100% ✓';
+  if (p === 75)  return '75% ✓';
+  if (p === 50)  return '50% △';
+  if (p === 25)  return '25% ✗';
+  if (p === 0)   return '0% ✗';
+  return p + '%';
+}
+function scoreChip(p, prefix) {
+  if (p === undefined || p === null || p === '') return '';
+  const cl = p >= 75 ? 'chip-green' : p >= 50 ? 'chip-amber' : 'chip-red';
+  return `<span class="chip ${cl}">${prefix ? prefix + ' ' : ''}${scoreLabel(p)}</span>`;
+}
+function beep(f = 1000, d = 180) {
+  try {
+    const C = window.AudioContext || window.webkitAudioContext;
+    const ctx = new C(), o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = 'sine'; o.frequency.value = f; g.gain.value = .35;
+    o.connect(g); g.connect(ctx.destination);
+    o.start(); setTimeout(() => { o.stop(); ctx.close(); }, d);
+  } catch(e) {}
+}
+
+/* ─── STATE ─────────────────────────── */
+let topics = [];
+let cfg = { pomMin: 50, autoAdv: true, mF2: 1, mF3: 1 };
+let meta = { start: null, end: null };
+let S = {
+  running: false, phase: 'idle',
+  pomStart: 0, pomEnd: 0, pomMs: 0, ticker: null,
+  idx: [], pos: 0, tStart: 0,
+  f1: [], f2q: [], f2r: [], fails: new Set(),
+  f3total: 0, f3rem: 0, f3t: null, f3run: false,
+  f3p2q: [], f3p2r: []
+};
+
+/* ─── PERSIST TOPICS ────────────────── */
+(function() {
+  try { const d = localStorage.getItem('sl_topics'); if (d) topics = JSON.parse(d); } catch(e) {}
+})();
+function saveTopics() { try { localStorage.setItem('sl_topics', JSON.stringify(topics)); } catch(e) {} }
+
+/* ─── SCREEN NAV ────────────────────── */
+document.querySelectorAll('.nb').forEach(btn => {
+  btn.addEventListener('click', () => goTo(btn.dataset.screen));
+});
+function goTo(id) {
+  document.querySelectorAll('.nb').forEach(b => b.classList.toggle('on', b.dataset.screen === id));
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id));
+  if (id === 'sReport') buildReport();
+}
+
+/* ─── POMODORO STEPPER ──────────────── */
+$('pomMinus').addEventListener('click', () => {
+  const v = parseInt($('pomVal').value) || 50;
+  $('pomVal').value = Math.max(1, v - 5);
+});
+$('pomPlus').addEventListener('click', () => {
+  const v = parseInt($('pomVal').value) || 50;
+  $('pomVal').value = v + 5;
+});
+
+/* ─── TOPIC MANAGEMENT ──────────────── */
+function renderTopics() {
+  const list = $('topicList');
+  const empty = $('emptyMsg');
+  if (!topics.length) {
+    if (empty) empty.style.display = 'block';
+    // remove old items
+    list.querySelectorAll('.topic-item').forEach(el => el.remove());
+    saveTopics(); return;
+  }
+  if (empty) empty.style.display = 'none';
+  // rebuild
+  list.querySelectorAll('.topic-item').forEach(el => el.remove());
+  topics.forEach((t, i) => {
+    const div = document.createElement('div');
+    div.className = 'topic-item';
+    div.innerHTML = `
+      <div class="topic-bullet"></div>
+      <div class="topic-info">
+        <div class="topic-info-name">${esc(t.name)}</div>
+        <div class="topic-info-est">${t.est} min estimados</div>
+      </div>
+      <button class="topic-del" data-i="${i}" type="button">✕</button>`;
+    list.appendChild(div);
+  });
+  saveTopics();
+}
+
+$('topicList').addEventListener('click', e => {
+  const del = e.target.closest('.topic-del');
+  if (del) {
+    const i = parseInt(del.dataset.i);
+    topics.splice(i, 1);
+    renderTopics();
+  }
+});
+
+function doAddTopic() {
+  const nameEl = $('tNameIn');
+  const estEl = $('tEstIn');
+  const name = nameEl.value.trim();
+  const est = Math.max(1, parseInt(estEl.value) || 5);
+  if (!name) { nameEl.focus(); return; }
+  topics.push({ name, est });
+  nameEl.value = '';
+  estEl.value = '5';
+  renderTopics();
+  nameEl.focus();
+}
+
+$('addBtn').addEventListener('click', doAddTopic);
+$('tNameIn').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doAddTopic(); } });
+
+renderTopics();
+
+/* ─── START SESSION ─────────────────── */
+$('startBtn').addEventListener('click', startSession);
+
+function startSession() {
+  if (!topics.length) { alert('Agrega al menos un tema.'); return; }
+  cfg.pomMin = Math.max(1, parseInt($('pomVal').value) || 50);
+  cfg.autoAdv = $('autoAdv').checked;
+  cfg.mF2 = Math.max(0.1, parseFloat($('mF2').value) || 1);
+  cfg.mF3 = Math.max(0.1, parseFloat($('mF3').value) || 1);
+  meta = { start: new Date(), end: null };
+
+  S.pomMs = cfg.pomMin * 60000;
+  S.pomStart = N(); S.pomEnd = S.pomStart + S.pomMs;
+  S.running = true; S.phase = 'phase1';
+  S.idx = topics.map((_, i) => i);
+  S.pos = 0; S.tStart = N();
+  S.f1 = []; S.f2q = []; S.f2r = []; S.fails = new Set();
+  S.f3p2q = []; S.f3p2r = [];
+  clearF3();
+
+  if (S.ticker) clearInterval(S.ticker);
+  S.ticker = setInterval(tick, 300);
+  $('sPip').classList.add('on');
+  goTo('sSession');
+  updateSess();
+  beep(1100, 150);
+}
+
+/* ─── TICK ──────────────────────────── */
+function tick() {
+  if (!S.running) return;
+  const now = N(), rem = S.pomEnd - now;
+  $('pomLeft').textContent = hms(Math.max(0, rem));
+  if (rem <= 0) { endSession('Pomodoro terminado'); return; }
+
+  if (S.phase === 'phase1' && cfg.autoAdv) {
+    const idx = S.idx[S.pos];
+    if (idx !== undefined) {
+      const el = now - S.tStart, estMs = topics[idx].est * 60000;
+      if (el >= estMs) {
+        if (S.pos === S.idx.length - 1) { recTopic(true); finishF1(); return; }
+        else { recTopic(true); advance(1); beep(800, 100); }
+      }
+    }
+  }
+  if (S.phase === 'phase2') {
+    const q = S.f2q[S.pos];
+    if (q && !q.wp && N() - S.tStart >= q.ms) { q.wp = true; showRecall(q.name).then(sc => onF2(q, sc)); }
+  }
+  if (S.phase === 'phase3p2') {
+    const q = S.f3p2q[S.pos];
+    if (q && !q.wp && N() - S.tStart >= q.ms) { q.wp = true; showRecall(q.name).then(sc => onF3p2(q, sc)); }
+  }
+  updateSess();
+}
+
+/* ─── SESSION UI ────────────────────── */
+function updateSess() {
+  const p = S.phase;
+  const isF3 = p === 'phase3';
+  $('f3Card').style.display = isF3 ? 'block' : 'none';
+  $('topicCard').style.display = isF3 ? 'none' : 'block';
+  $('navRow').style.display = isF3 ? 'none' : 'flex';
+
+  const labels = {
+    phase1: 'Fase 1 — Memorización',
+    phase2: 'Fase 2 — Recall Instantáneo',
+    phase3: 'Fase 3 — Pausa Productiva',
+    phase3p2: 'Fase 3 — Recall Espaciado'
+  };
+  $('phaseLabel').textContent = labels[p] || '—';
+
+  if (p === 'phase1' || p === 'phase2' || p === 'phase3p2') {
+    const q = p === 'phase1' ? null : p === 'phase2' ? S.f2q[S.pos] : S.f3p2q[S.pos];
+    const total = p === 'phase1' ? S.idx.length : p === 'phase2' ? S.f2q.length : S.f3p2q.length;
+    const name = p === 'phase1' ? (topics[S.idx[S.pos]] ? topics[S.idx[S.pos]].name : '—') : (q ? q.name : '—');
+    const estMs = p === 'phase1' ? ((topics[S.idx[S.pos]] ? topics[S.idx[S.pos]].est : 1) * 60000) : (q ? q.ms : 1);
+    const el = N() - S.tStart, rem = Math.max(0, estMs - el), pct = Math.min(100, el / estMs * 100);
+
+    $('tcNum').textContent = 'Tema ' + (S.pos + 1) + ' / ' + total;
+    $('tcName').textContent = name;
+    $('tcEst').textContent = fmt(estMs / 1000);
+    $('tcEl').textContent = mmss(el);
+    $('tcBar').style.width = pct + '%';
+    $('tcBar').style.background = pct > 90 ? 'var(--amber)' : 'var(--cyan)';
+    setRing(rem, estMs, p === 'phase1' ? 'var(--cyan)' : 'var(--blue)');
+    $('rTime').textContent = mmss(rem);
+    $('rSub').textContent = 'restante';
+  }
+  if (p === 'phase3') {
+    setRing(S.f3rem, S.f3total, 'var(--amber)');
+    $('rTime').textContent = mmss(S.f3rem);
+    $('rSub').textContent = 'pausa';
+  }
+}
+
+function setRing(rem, total, color) {
+  const circ = 578.05, pct = total > 0 ? Math.max(0, rem / total) : 0;
+  $('rArc').style.strokeDashoffset = circ * (1 - pct);
+  $('rArc').style.stroke = color;
+}
+
+/* ─── NAV BUTTONS ───────────────────── */
+$('btnNext').addEventListener('click', () => {
+  if (!S.running) return;
+  if (S.phase === 'phase1') {
+    if (S.pos === S.idx.length - 1) { recTopic(false); finishF1(); }
+    else { recTopic(false); advance(1); beep(900, 100); }
+  } else if (S.phase === 'phase2') {
+    const q = S.f2q[S.pos];
+    if (q) { q.wp = true; showRecall(q.name).then(sc => onF2(q, sc)); }
+  } else if (S.phase === 'phase3p2') {
+    const q = S.f3p2q[S.pos];
+    if (q) { q.wp = true; showRecall(q.name).then(sc => onF3p2(q, sc)); }
+  }
+});
+$('btnPrev').addEventListener('click', () => { if (!S.running) return; advance(-1); beep(700, 100); });
+$('btnStop').addEventListener('click', () => endSession('Detenido'));
+$('btnForceF2').addEventListener('click', () => {
+  if (S.phase === 'phase1') { recTopic(false); finishF1(); }
+  else alert('Solo disponible en Fase 1.');
+});
+
+function advance(d) {
+  const np = S.pos + d;
+  if (S.phase === 'phase1') {
+    S.pos = clamp(np, 0, S.idx.length - 1); S.tStart = N();
+  } else if (S.phase === 'phase2') {
+    if (np >= S.f2q.length) { doneF2(); return; }
+    S.pos = Math.max(0, np); S.tStart = N();
+  } else if (S.phase === 'phase3p2') {
+    if (np >= S.f3p2q.length) { doneF3p2(); return; }
+    S.pos = Math.max(0, np); S.tStart = N();
+  }
+  updateSess();
+}
+
+/* ─── PHASE 1 ───────────────────────── */
+function recTopic(auto) {
+  const idx = S.idx[S.pos];
+  if (idx === undefined) return;
+  S.f1.push({ index: idx, name: topics[idx].name, est: topics[idx].est, ms: N() - S.tStart, auto });
+  S.tStart = N();
+}
+function finishF1() {
+  const li = S.idx[S.pos];
+  if (li !== undefined && !S.f1.some(r => r.index === li)) recTopic(false);
+  S.f2q = S.f1.map(r => ({ index: r.index, name: r.name, ms: Math.max(1000, Math.round(r.ms * cfg.mF2)), wp: false }));
+  S.f2r = []; S.fails = new Set();
+  if (!S.f2q.length) { endSession('Sin temas F2'); return; }
+  S.phase = 'phase2'; S.pos = 0; S.tStart = N(); updateSess(); beep(1200, 180);
+}
+
+/* ─── RECALL MODAL ──────────────────── */
+function showRecall(name) {
+  $('recallName').textContent = name;
+  const ov = $('ovRecall'); ov.classList.add('on');
+  return new Promise(res => {
+    const btns = ov.querySelectorAll('.score-btn');
+    function clean() {
+      btns.forEach(b => b.removeEventListener('click', onB));
+      $('recallCancel').removeEventListener('click', onC);
+      ov.classList.remove('on');
+    }
+    function onB(e) { clean(); res(Number(e.currentTarget.dataset.v)); }
+    function onC() { clean(); res(null); }
+    btns.forEach(b => b.addEventListener('click', onB));
+    $('recallCancel').addEventListener('click', onC);
+  });
+}
+
+function showReason() {
+  $('reasonTa').value = '';
+  const ov = $('ovReason'); ov.classList.add('on');
+  return new Promise(res => {
+    function clean() {
+      $('reasonSave').removeEventListener('click', onSv);
+      $('reasonSkip').removeEventListener('click', onSk);
+      ov.classList.remove('on');
+    }
+    function onSv() { clean(); res($('reasonTa').value.trim()); }
+    function onSk() { clean(); res(''); }
+    $('reasonSave').addEventListener('click', onSv);
+    $('reasonSkip').addEventListener('click', onSk);
+    setTimeout(() => $('reasonTa').focus(), 100);
+  });
+}
+
+/* ─── PHASE 2 ───────────────────────── */
+async function onF2(q, sc) {
+  if (sc === null) { q.wp = false; S.tStart = N(); updateSess(); return; }
+  const ok = sc >= 75, reason = !ok ? await showReason() : '';
+  S.f2r.push({ index: q.index, name: q.name, ms: q.ms, score: sc, ok, reason });
+  if (!ok) S.fails.add(q.index);
+  advance(1); beep(900, 100);
+}
+function doneF2() {
+  const fails = Array.from(S.fails);
+  const avg = S.f2r.length ? Math.round(S.f2r.reduce((s, r) => s + r.score, 0) / S.f2r.length) : 0;
+  $('f2Body').innerHTML = 'Promedio: <strong style="color:' + scoreColor(avg) + '">' + avg + '%</strong> — ' + S.f2r.filter(r => r.ok).length + ' aprobados, ' + fails.length + ' fallidos.';
+  $('f2Fails').innerHTML = fails.length
+    ? fails.map(i => `<div class="fail-row"><div class="fail-name">${esc(topics[i] ? topics[i].name : '?')}</div></div>`).join('')
+    : '<p style="color:var(--green);font-size:14px;font-weight:600;padding:8px 0;">¡Sin fallos en F2! 🎉</p>';
+  $('f2ReMem').style.display = fails.length ? 'block' : 'none';
+  $('ovF2').classList.add('on');
+}
+$('f2ToF3').addEventListener('click', () => { $('ovF2').classList.remove('on'); enterF3(); });
+$('f2ReMem').addEventListener('click', () => {
+  const f = Array.from(S.fails).sort((a, b) => a - b);
+  S.idx = f; S.phase = 'phase1'; S.pos = 0; S.tStart = N();
+  S.f1 = []; S.f2q = []; S.f2r = []; S.fails = new Set();
+  $('ovF2').classList.remove('on'); updateSess();
+});
+$('f2Close').addEventListener('click', () => $('ovF2').classList.remove('on'));
+
+/* ─── PHASE 3 PART 1 ────────────────── */
+function enterF3() {
+  const tot = S.f2r.length
+    ? S.f2r.reduce((s, r) => s + (r.ms || 0), 0)
+    : S.f2q.reduce((s, q) => s + (q.ms || 0), 0) || 60000;
+  S.f3total = Math.max(1000, Math.round(tot * cfg.mF3));
+  S.f3rem = S.f3total; S.phase = 'phase3'; S.f3run = false;
+  const m = Math.round(S.f3total / 60000);
+  let sg = 'Respira profundo y despeja la mente';
+  if (m >= 10) sg = 'Camina sin pantalla o lee algo diferente';
+  else if (m >= 6) sg = 'Meditación o planifica el resto del día';
+  else if (m >= 3) sg = 'Respiración profunda, 4-7-8 o estiramientos';
+  $('f3Sugg').textContent = '💡 ' + sg;
+  $('f3Big').textContent = mmss(S.f3rem);
+  $('f3StartBtn').style.display = 'flex';
+  $('f3ContBtn').style.display = 'none';
+  updateSess();
+}
+$('f3StartBtn').addEventListener('click', () => {
+  if (S.phase !== 'phase3' || S.f3run) return;
+  S.f3run = true; $('f3StartBtn').style.display = 'none';
+  S.f3t = setInterval(() => {
+    S.f3rem -= 300;
+    if (S.f3rem <= 0) {
+      S.f3rem = 0; clearInterval(S.f3t); S.f3t = null; S.f3run = false;
+      $('f3Big').textContent = '0:00'; beep(1500, 380);
+      if ($('f3Mode').value === 'auto') startF3p2();
+      else $('f3ContBtn').style.display = 'flex';
+    } else {
+      $('f3Big').textContent = mmss(S.f3rem);
+    }
+  }, 300);
+});
+$('f3PauseBtn').addEventListener('click', () => {
+  if (S.f3t) { clearInterval(S.f3t); S.f3t = null; S.f3run = false; $('f3StartBtn').style.display = 'flex'; }
+});
+$('f3ContBtn').addEventListener('click', () => startF3p2());
+function clearF3() {
+  if (S.f3t) { clearInterval(S.f3t); S.f3t = null; }
+  S.f3total = 0; S.f3rem = 0; S.f3run = false;
+}
+
+/* ─── PHASE 3 PART 2 ────────────────── */
+function startF3p2() {
+  const src = S.f2q.length ? S.f2q : S.f1.map(r => ({ index: r.index, name: r.name, ms: Math.max(1000, Math.round(r.ms * cfg.mF2)) }));
+  S.f3p2q = src.map(q => ({ ...q, wp: false }));
+  S.f3p2r = []; S.pos = 0; S.tStart = N(); S.phase = 'phase3p2'; updateSess();
+}
+async function onF3p2(q, sc) {
+  if (sc === null) { q.wp = false; S.tStart = N(); updateSess(); return; }
+  const ok = sc >= 75, reason = !ok ? await showReason() : '';
+  S.f3p2r.push({ index: q.index, name: q.name, ms: q.ms, score: sc, ok, reason });
+  if (!ok) S.fails.add(q.index);
+  advance(1); beep(900, 100);
+}
+function doneF3p2() {
+  meta.end = new Date();
+  const fails = Array.from(S.fails);
+  const avg = S.f3p2r.length ? Math.round(S.f3p2r.reduce((s, r) => s + r.score, 0) / S.f3p2r.length) : 0;
+  $('finalBody').innerHTML = 'F3 promedio: <strong style="color:' + scoreColor(avg) + '">' + avg + '%</strong> — ' + S.f3p2r.filter(r => r.ok).length + ' aprobados, ' + fails.length + ' fallidos.';
+  $('finalFails').innerHTML = fails.length
+    ? fails.map(i => `<div class="fail-row"><div class="fail-name">${esc(topics[i] ? topics[i].name : '?')}</div></div>`).join('')
+    : '<p style="color:var(--green);font-size:14px;font-weight:600;padding:8px 0;">Sesión perfecta 🎉</p>';
+  $('finalReMem').style.display = fails.length ? 'block' : 'none';
+  $('ovFinal').classList.add('on');
+  $('sPip').classList.remove('on');
+  beep(1300, 300);
+}
+$('finalReport').addEventListener('click', () => { $('ovFinal').classList.remove('on'); goTo('sReport'); });
+$('finalPdf').addEventListener('click', () => { $('ovFinal').classList.remove('on'); goTo('sReport'); setTimeout(doPrint, 300); });
+$('finalReMem').addEventListener('click', () => {
+  const f = Array.from(S.fails).sort((a, b) => a - b);
+  S.idx = f; S.phase = 'phase1'; S.pos = 0; S.tStart = N();
+  S.f1 = []; S.f2q = []; S.f2r = []; S.fails = new Set();
+  $('ovFinal').classList.remove('on'); goTo('sSession'); updateSess();
+});
+$('finalRepeat').addEventListener('click', () => { $('ovFinal').classList.remove('on'); location.reload(); });
+
+/* ─── END SESSION ───────────────────── */
+function endSession(msg) {
+  if (!meta.end) meta.end = new Date();
+  if (S.ticker) { clearInterval(S.ticker); S.ticker = null; }
+  S.running = false;
+  $('sPip').classList.remove('on');
+  beep(1400, 260);
+  buildReport();
+  goTo('sReport');
+}
+
+/* ─── REPORT ────────────────────────── */
+function buildReport() {
+  const map = {};
+  S.f1.forEach(r => {
+    map[r.index] = { name: r.name, est: r.est, f1s: Math.round(r.ms / 1000), f1es: r.est * 60, delta: Math.round(r.ms / 1000) - r.est * 60 };
+  });
+  S.f2r.forEach(p => {
+    if (!map[p.index]) map[p.index] = { name: p.name };
+    Object.assign(map[p.index], { f2s: Math.round((p.ms || 0) / 1000), f2p: p.score, f2ok: p.ok, f2r: p.reason || '' });
+  });
+  S.f3p2r.forEach(p => {
+    if (!map[p.index]) map[p.index] = { name: p.name };
+    Object.assign(map[p.index], { f3p: p.score, f3ok: p.ok, f3r: p.reason || '' });
+  });
+
+  const keys = Object.keys(map).sort((a, b) => a - b);
+  if (!keys.length) {
+    $('repBody').innerHTML = '<div style="text-align:center;padding:40px 0;font-size:14px;color:var(--muted);">Completa al menos una fase.</div>';
+    return;
+  }
+
+  const n = keys.length;
+  const f1s = S.f1.reduce((s, r) => s + Math.round(r.ms / 1000), 0);
+  const f2s = S.f2r.reduce((s, r) => s + Math.round((r.ms || 0) / 1000), 0);
+  const f3s = Math.round(S.f3total / 1000);
+  const okF2 = S.f2r.filter(r => r.ok).length, failF2 = S.f2r.length - okF2;
+  const okF3 = S.f3p2r.filter(r => r.ok).length, failF3 = S.f3p2r.length - okF3;
+  const avgF2 = S.f2r.length ? Math.round(S.f2r.reduce((s, r) => s + r.score, 0) / S.f2r.length) : null;
+  const avgF3 = S.f3p2r.length ? Math.round(S.f3p2r.reduce((s, r) => s + r.score, 0) / S.f3p2r.length) : null;
+  const avgDel = n ? keys.reduce((s, k) => s + (map[k].delta || 0), 0) / n : 0;
+
+  function getRecs() {
+    const r = [];
+    if (avgDel > 60) r.push({ i: '⏱', t: '<strong>F1:</strong> Superas el estimado por ' + Math.round(avgDel) + 's promedio. Divide los temas en bloques de máx 3 min.' });
+    else if (avgDel > 15) r.push({ i: '📝', t: '<strong>F1:</strong> Pequeño exceso (+' + Math.round(avgDel) + 's). Cierra apuntes y escribe lo que recuerdas antes de estudiar cada tema.' });
+    else r.push({ i: '✅', t: '<strong>F1:</strong> Estimación precisa. Mantén este ritmo.' });
+    if (avgF2 !== null) {
+      if (avgF2 < 50) r.push({ i: '🧠', t: '<strong>F2 ' + avgF2 + '%:</strong> Recall débil. Crea un flashcard mental antes de F2 y sube el multiplicador a 1.5×.' });
+      else if (avgF2 < 75) r.push({ i: '🗣️', t: '<strong>F2 ' + avgF2 + '%:</strong> Recall moderado. Explica en voz alta cada tema como si se lo contaras a alguien.' });
+      else r.push({ i: '🎯', t: '<strong>F2 ' + avgF2 + '%:</strong> Buen recall. Puedes reducir multF2 para mayor desafío.' });
+    }
+    if (avgF3 !== null) {
+      if (avgF3 < 50) r.push({ i: '🔁', t: '<strong>F3 ' + avgF3 + '%:</strong> Recuperación difícil. Aumenta multF3 y mezcla el orden de temas.' });
+      else if (avgF3 < 75) r.push({ i: '📅', t: '<strong>F3 ' + avgF3 + '%:</strong> Aceptable. Los fallos necesitan repaso en 24h → 3 días → 7 días.' });
+      else r.push({ i: '🚀', t: '<strong>F3 ' + avgF3 + '%:</strong> Excelente. Incrementa multF3 gradualmente.' });
+    }
+    if (f3s > 0) r.push({ i: '🧘', t: '<strong>Pausa F3 (' + fmt(f3s) + '):</strong> Próxima sesión: camina sin pantalla — consolida mejor que descansar con el móvil.' });
+    const allR = [...S.f2r, ...S.f3p2r].filter(x => x.reason).map(x => x.reason.toLowerCase());
+    if (allR.some(x => x.includes('distraj') || x.includes('atenci'))) r.push({ i: '🔕', t: '<strong>General:</strong> Detecté distracciones. Activa modo avión 10 min antes de estudiar.' });
+    if (allR.some(x => x.includes('cansad') || x.includes('sueño'))) r.push({ i: '😴', t: '<strong>General:</strong> Fatiga detectada. Mueve la Fase 3 a tu hora de mayor energía.' });
+    return r;
+  }
+
+  const pbF2 = S.f2r.length ? Math.round(okF2 / S.f2r.length * 100) : 0;
+  const pbF3 = S.f3p2r.length ? Math.round(okF3 / S.f3p2r.length * 100) : 0;
+  const recs = getRecs();
+
+  let h = `
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-val">${n}</div><div class="kpi-lbl">Temas</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:${avgF2 !== null ? scoreColor(avgF2) : 'var(--muted)'}">${avgF2 !== null ? avgF2 + '%' : '—'}</div><div class="kpi-lbl">Avg F2</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:${avgF3 !== null ? scoreColor(avgF3) : 'var(--muted)'}">${avgF3 !== null ? avgF3 + '%' : '—'}</div><div class="kpi-lbl">Avg F3</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:${S.fails.size ? 'var(--red)' : 'var(--green)'}">${S.fails.size}</div><div class="kpi-lbl">Fallos</div></div>
+  </div>
+
+  <div class="rsec">
+    <div class="rsec-head"><span class="rsec-icon">⏱</span><span class="rsec-title">Tiempos</span></div>
+    <div class="rrow"><span class="rrow-lbl">Inicio</span><span class="rrow-val">${meta.start ? meta.start.toLocaleTimeString('es') : '—'}</span></div>
+    <div class="rrow"><span class="rrow-lbl">Fin</span><span class="rrow-val">${meta.end ? meta.end.toLocaleTimeString('es') : '—'}</span></div>
+    <div class="rrow"><span class="rrow-lbl">Total Fase 1</span><span class="rrow-val">${fmt(f1s)}</span></div>
+    <div class="rrow"><span class="rrow-lbl">Total Fase 2</span><span class="rrow-val">${fmt(f2s)}</span></div>
+    <div class="rrow"><span class="rrow-lbl">Pausa F3</span><span class="rrow-val">${fmt(f3s)}</span></div>
+    <div class="rrow"><span class="rrow-lbl">Delta F1 promedio</span><span class="rrow-val" style="color:${avgDel > 30 ? 'var(--amber)' : 'var(--green)'}">${avgDel >= 0 ? '+' : ''}${Math.round(avgDel)}s</span></div>
+  </div>
+
+  ${(S.f2r.length || S.f3p2r.length) ? `
+  <div class="rsec">
+    <div class="rsec-head"><span class="rsec-icon">📊</span><span class="rsec-title">Resultados por fase</span></div>
+    ${S.f2r.length ? `<div class="pbar-row"><span class="pbar-label">Fase 2</span><div class="pbar-bg"><div class="pbar-fill" style="width:${pbF2}%;background:var(--blue)"></div></div><span class="pbar-pct" style="color:var(--blue)">${pbF2}%</span></div>` : ''}
+    ${S.f3p2r.length ? `<div class="pbar-row"><span class="pbar-label">Fase 3p2</span><div class="pbar-bg"><div class="pbar-fill" style="width:${pbF3}%;background:var(--green)"></div></div><span class="pbar-pct" style="color:var(--green)">${pbF3}%</span></div>` : ''}
+  </div>` : ''}
+
+  <div class="rsec">
+    <div class="rsec-head"><span class="rsec-icon">📋</span><span class="rsec-title">Detalle por tema</span></div>
+    ${keys.map((k, i) => {
+      const v = map[k];
+      const dc = v.delta > 30 ? 'var(--amber)' : v.delta < -30 ? 'var(--blue)' : 'var(--green)';
+      return `<div class="topic-result">
+        <div class="tr-name">${i + 1}. ${esc(v.name || '—')}</div>
+        <div class="chips">
+          <span class="chip chip-gray">F1: ${fmt(v.f1s)}/${fmt(v.f1es)}</span>
+          <span class="chip chip-gray" style="color:${dc}">Δ ${v.delta >= 0 ? '+' : ''}${v.delta || 0}s</span>
+          ${scoreChip(v.f2p, 'F2')}${scoreChip(v.f3p, 'F3')}
+        </div>
+        ${(v.f2r || v.f3r) ? `<div class="tr-reason">"${esc(v.f2r || v.f3r)}"</div>` : ''}
+      </div>`;
+    }).join('')}
+  </div>
+
+  ${S.fails.size ? `
+  <div class="rsec">
+    <div class="rsec-head" style="border-bottom:1px solid rgba(255,63,96,.2)">
+      <span class="rsec-icon">⚠️</span><span class="rsec-title" style="color:var(--red)">Para reforzar</span>
+    </div>
+    ${Array.from(S.fails).map(i => {
+      const v = map[i]; if (!v) return '';
+      const w = Math.min(v.f2p !== undefined ? v.f2p : 100, v.f3p !== undefined ? v.f3p : 100);
+      return `<div class="fail-row">
+        <div class="fail-name">${esc(v.name || '—')}</div>
+        <div>${scoreChip(w)}</div>
+        ${(v.f2r || v.f3r) ? `<div class="fail-reason">"${esc(v.f2r || v.f3r)}"</div>` : ''}
+      </div>`;
+    }).join('')}
+    <div style="padding:10px 16px 14px;font-size:12px;color:var(--muted);">Repasa en 24h → 3 días → 7 días</div>
+  </div>` : ''}
+
+  <div class="rsec">
+    <div class="rsec-head"><span class="rsec-icon">💡</span><span class="rsec-title">Recomendaciones</span></div>
+    ${recs.map(r => `<div class="rec-row"><div class="rec-icon">${r.i}</div><div class="rec-text">${r.t}</div></div>`).join('')}
+  </div>
+
+  <div style="text-align:center;font-size:11px;color:var(--muted);padding:8px 0;">Study Lab · ${new Date().toLocaleString('es')}</div>`;
+
+  $('repBody').innerHTML = h;
+}
+
+/* ─── PDF / CSV ─────────────────────── */
+$('pdfBtn').addEventListener('click', doPrint);
+$('csvBtn').addEventListener('click', doCSV);
+function doPrint() { buildReport(); setTimeout(() => window.print(), 150); }
+function doCSV() {
+  const m = {};
+  S.f1.forEach(r => m[r.index] = { name: r.name, est: r.est, f1s: Math.round(r.ms / 1000) });
+  S.f2r.forEach(p => { if (!m[p.index]) m[p.index] = { name: p.name }; Object.assign(m[p.index], { f2s: Math.round((p.ms||0)/1000), f2p: p.score, f2r: p.reason||'' }); });
+  S.f3p2r.forEach(p => { if (!m[p.index]) m[p.index] = { name: p.name }; Object.assign(m[p.index], { f3p: p.score, f3r: p.reason||'' }); });
+  const rows = [['tema','est_min','f1_s','f2_s','f2_pct','f2_razon','f3_pct','f3_razon']];
+  Object.keys(m).sort((a,b)=>a-b).forEach(k => { const v=m[k]; rows.push([v.name||'',v.est||'',v.f1s||'',v.f2s||'',v.f2p||'',v.f2r||'',v.f3p||'',v.f3r||'']); });
+  const csv = rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(',')).join('\n');
+  const a = document.createElement('a'); a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv); a.download = 'studylab.csv'; a.click();
+}
+
+/* ─── PWA ───────────────────────────── */
+const mf = { name:'Study Lab', short_name:'Study Lab', start_url:'.', display:'standalone', background_color:'#060f1c', theme_color:'#060f1c', orientation:'portrait', icons:[{ src:"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='36' fill='%23060f1c'/%3E%3Ccircle cx='96' cy='96' r='60' fill='none' stroke='%232de8f4' stroke-width='8'/%3E%3Cpath d='M96 56v40l24 14' stroke='%232de8f4' stroke-width='8' stroke-linecap='round' fill='none'/%3E%3C/svg%3E", sizes:'192x192', type:'image/svg+xml' }] };
+const ml = document.createElement('link'); ml.rel = 'manifest'; ml.href = URL.createObjectURL(new Blob([JSON.stringify(mf)], { type: 'application/manifest+json' })); document.head.appendChild(ml);
+
+if ('serviceWorker' in navigator) {
+  const sw = `const C='sl-v4';self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.add('${location.href}')));self.skipWaiting()});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==C).map(k=>caches.delete(k)))));self.clients.claim()});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>caches.match(e.request))))});`;
+  navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw], { type: 'application/javascript' }))).catch(() => {});
+}
+
+let dPr = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); dPr = e;
+  $('installArea').innerHTML = `<div style="background:rgba(45,232,244,.07);border:1px solid rgba(45,232,244,.25);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px">
+    <div style="font-size:26px">📲</div>
+    <div style="flex:1"><div style="font-weight:700;color:var(--cyan);font-size:14px">Instalar en celular</div><div style="font-size:12px;color:var(--muted);margin-top:2px">Funciona sin internet</div></div>
+    <button id="instNow" type="button" style="background:var(--cyan);color:#040c18;border:0;border-radius:10px;padding:10px 14px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap">Instalar</button>
+  </div>`;
+  $('instNow').addEventListener('click', () => { dPr.prompt(); dPr.userChoice.then(() => { dPr = null; $('installArea').innerHTML = ''; }); });
+});
+</script>
+</body>
+</html>
