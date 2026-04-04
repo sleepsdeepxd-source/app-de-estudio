@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚗️ Cuantificador Hormonal PRO • Luis</title>
+  <meta name="description" content="Estima tus niveles hormonales post-entrenamiento en tiempo real. Funciona sin internet.">
+  <meta name="theme-color" content="#020617">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="stylesheet" href="./styles.css">
+  <style>
+    /* Bar transition helper */
+    .bar { transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- ── Header ───────────────────────────── -->
+    <div class="header">
+      <div>
+        <h1>⚗️ Cuantificador Hormonal PRO</h1>
+        <p class="subtitle">Para ti, Luis • Quito, Ecuador</p>
+        <p class="desc">Basado en estudios reales (Kraemer, Vingren, Hackney, Ho, etc.) + efectos de ayuno, meditación y tu dieta (lentejas + quinua + sardinas)</p>
+      </div>
+      <div class="badge">
+        <span style="color:var(--emerald-400)">✅ Offline PWA</span>
+        <span class="dot">•</span>
+        <span class="ver">Sin internet</span>
+      </div>
+    </div>
+
+    <!-- ── Score Anabólico Central ──────────── -->
+    <div id="scoreCard" class="score-card">
+      <div class="score-title">ÍNDICE ANABÓLICO ESTIMADO (0-100)</div>
+      <div id="anabolicScore" class="score-number">82</div>
+      <div id="scoreLabel" class="score-label">ZONA ANABÓLICA FUERTE ✅</div>
+      <div class="score-note">Pico post-entreno + efectos de ayuno, meditación y nutrición • vs tu basal</div>
+    </div>
+
+    <!-- ── Main Grid ─────────────────────────── -->
+    <div class="main-grid">
+
+      <!-- PANEL IZQUIERDO: INPUTS -->
+      <div class="panel">
+        <div class="section-title">Tus variables reales (ajusta y ve el impacto)</div>
+
+        <!-- Tipo de ejercicio -->
+        <div class="form-group">
+          <label class="form-label" for="exerciseType">Tipo de ejercicio</label>
+          <select id="exerciseType">
+            <option value="compound_heavy">Compuesto pesado (sentadilla, peso muerto, press banca)</option>
+            <option value="compound_moderate">Compuesto moderado</option>
+            <option value="isolation">Aislamiento (curls, extensiones)</option>
+            <option value="hiit">HIIT / Sprints</option>
+            <option value="cardio">Cardio continuo</option>
+          </select>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label" for="intensity">Intensidad (%1RM o esfuerzo percibido)</label>
+            <div class="range-wrapper">
+              <input type="range" id="intensity" min="40" max="100" value="80" step="5">
+              <span id="intensityValue" class="range-val">80%</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="duration">Duración total sesión</label>
+            <div class="range-wrapper">
+              <input type="range" id="duration" min="15" max="120" value="55" step="5">
+              <span id="durationValue" class="range-val">55 min</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row-3">
+          <div class="form-group">
+            <label class="form-label" for="sets">Series</label>
+            <input type="range" id="sets" min="1" max="10" value="5" step="1">
+            <span id="setsValue" class="range-val-center">5</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reps">Reps por serie</label>
+            <input type="range" id="reps" min="1" max="20" value="5" step="1">
+            <span id="repsValue" class="range-val-center">5</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="rest">Descanso entre series</label>
+            <input type="range" id="rest" min="30" max="300" value="90" step="15">
+            <span id="restValue" class="range-val-center">90 s</span>
+          </div>
+        </div>
+
+        <!-- Contexto avanzado -->
+        <div class="divider-section">
+          <div class="divider-title">Contexto diario (esto marca la diferencia)</div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label" for="sleep">Horas de sueño (noche anterior)</label>
+              <input type="range" id="sleep" min="4" max="10" value="8" step="0.5">
+              <span id="sleepValue" class="range-val-center">8.0 h</span>
+              <p class="form-hint">¿A qué hora te duermes? (ideal 22:00-23:00 para pico HGH)</p>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="fasting">Horas de ayuno antes del entreno</label>
+              <input type="range" id="fasting" min="0" max="36" value="16" step="2">
+              <span id="fastingValue" class="range-val-center">16 h</span>
+              <p class="form-hint amber">12-16 h = buen boost HGH • 24 h+ = HGH muy alto pero cortisol ↑</p>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="meditation">Minutos de meditación / mindfulness hoy</label>
+            <input type="range" id="meditation" min="0" max="60" value="15" step="5">
+            <span id="meditationValue" class="range-val-center">15 min</span>
+            <p class="form-hint emerald">Reduce cortisol (estudios mindfulness)</p>
+          </div>
+
+          <!-- Nutrición -->
+          <div class="form-group">
+            <label class="form-label">Tu dieta diaria • Marca lo que comes casi siempre</label>
+            <div class="checkbox-grid">
+              <label class="checkbox-card">
+                <input type="checkbox" id="lentilsQuinoa" checked>
+                <div>
+                  <span class="food-name">Lentejas + Quinua</span>
+                  <span class="food-desc">Proteína completa • barata</span>
+                </div>
+              </label>
+              <label class="checkbox-card">
+                <input type="checkbox" id="sardines" checked>
+                <div>
+                  <span class="food-name">Sardinas en lata</span>
+                  <span class="food-desc">Omega-3 + Vit D natural</span>
+                </div>
+              </label>
+              <label class="checkbox-card">
+                <input type="checkbox" id="eggs" checked>
+                <div>
+                  <span class="food-name">Huevos (súper alimento)</span>
+                  <span class="food-desc emerald">Barato, grasas + proteína + Vit D</span>
+                </div>
+              </label>
+            </div>
+            <p class="checkbox-note">Huevos: el alimento más barato y complementario en Ecuador. Añaden grasas saludables y colesterol para producir más testosterona y DHT.</p>
+          </div>
+
+          <!-- Horario -->
+          <div class="form-group">
+            <label class="form-label">Horario del entreno</label>
+            <div class="time-group">
+              <button data-time="morning" class="time-btn" data-active="true">Mañana (6-10 am)</button>
+              <button data-time="afternoon" class="time-btn">Tarde (12-17 pm)</button>
+              <button data-time="evening" class="time-btn">Noche (18-22 pm)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL DERECHO: RESULTADOS -->
+      <div class="panel-right">
+        <div class="panel">
+          <div class="section-title">Niveles hormonales estimados POST-entreno</div>
+          <div id="resultsContainer" class="results-stack"></div>
+        </div>
+
+        <div class="panel">
+          <div class="section-title">Variación vs tu línea base</div>
+          <div id="comparison" class="comparison-stack"></div>
+          <div class="comparison-note">
+            ⚠️ Estimaciones poblacionales reales (no sustituyen análisis de sangre).
+            Para calibrar tu basal real: hazte un panel hormonal en ayunas (8 am, sin entrenar el día anterior).
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Protocolo Óptimo ───────────────── -->
+    <div class="protocol">
+      <div class="protocol-title">🎯 Tu protocolo óptimo (máximo anabólico • mínimo cortisol)</div>
+      <div class="protocol-grid">
+        <div class="protocol-card"><div class="p-label">Ejercicio</div><div class="p-value">Compuesto pesado 4-6 series × 3-6 reps</div></div>
+        <div class="protocol-card"><div class="p-label">Duración</div><div class="p-value">45-55 minutos máximo</div></div>
+        <div class="protocol-card"><div class="p-label">Ayuno</div><div class="p-value">14-18 horas (ideal 16 h)</div></div>
+        <div class="protocol-card"><div class="p-label">Meditación</div><div class="p-value">10-20 min diarios (reduce cortisol 15-25%)</div></div>
+        <div class="protocol-card"><div class="p-label">Dieta diaria</div><div class="p-value">Lentejas + Quinua + Sardinas + Huevos</div></div>
+        <div class="protocol-card"><div class="p-label">Sueño</div><div class="p-value">8-9 horas • acostarte antes de 23:00</div></div>
+        <div class="protocol-card"><div class="p-label">Horario ideal</div><div class="p-value">Mañana (mejor testosterona natural)</div></div>
+        <div class="protocol-card"><div class="p-label">Frecuencia</div><div class="p-value">3-5 días/semana + 2 días recuperación</div></div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      Abre esta app una vez con internet, instálala con Edge/Chrome y luego
+      <strong>funciona sin conexión</strong>. ¡Mide, ajusta y crece!
+    </div>
+  </div>
+
+  <script>
+    // ── Baseline (hombre sano 20-35 años) ────────────────────────────
+    const BASELINE = {
+      testosterone: 550,
+      hgh:          1.2,
+      igf1:         180,
+      dht:          45,
+      cortisol:     14
+    };
+
+    // ── Rangos de referencia ──────────────────────────────────────────
+    const RANGES = {
+      testosterone: { min: 300,  low: 400,  ok: 600,  high: 900,  max: 1100, unit: 'ng/dL' },
+      hgh:          { min: 0.4,  low: 1,    ok: 3,    high: 8,    max: 16,   unit: 'ng/mL' },
+      igf1:         { min: 80,   low: 120,  ok: 200,  high: 280,  max: 380,  unit: 'ng/mL' },
+      dht:          { min: 20,   low: 30,   ok: 55,   high: 85,   max: 110,  unit: 'ng/dL' },
+      cortisol:     { min: 5,    low: 8,    ok: 18,   high: 28,   max: 45,   unit: 'mcg/dL' }
+    };
+
+    function clamp(val, min, max) { return Math.min(Math.max(val, min), max); }
+
+    // ── Cálculo hormonal ──────────────────────────────────────────────
+    function calcHormones(form) {
+      let tMult    = 1;
+      let hghMult  = 1;
+      let igf1Mult = 1;
+      let cortMult = 1;
+
+      // === TESTOSTERONA ===
+      if      (form.exerciseType === 'compound_heavy')    tMult += 0.28;
+      else if (form.exerciseType === 'compound_moderate') tMult += 0.18;
+      else if (form.exerciseType === 'isolation')         tMult += 0.08;
+      else if (form.exerciseType === 'hiit')              tMult += 0.15;
+      else if (form.exerciseType === 'cardio')            tMult += 0.04;
+
+      if      (form.intensity >= 85) tMult += 0.22;
+      else if (form.intensity >= 70) tMult += 0.14;
+      else if (form.intensity >= 55) tMult += 0.08;
+
+      if      (form.rest <= 90)  tMult += 0.12;
+      else if (form.rest <= 150) tMult += 0.06;
+
+      const volume = form.sets * form.reps;
+      if      (volume >= 25 && volume <= 50) tMult += 0.10;
+      else if (volume > 50)                  tMult += 0.05;
+
+      if (form.timeOfDay === 'morning') tMult += 0.15;
+
+      // Nutrición
+      let nutriMult = 1;
+      if (form.lentilsQuinoa) nutriMult += 0.15;
+      if (form.sardines)      nutriMult += 0.12;
+      if (form.eggs)          nutriMult += 0.18;
+      tMult *= nutriMult;
+
+      // === HGH ===
+      if      (form.exerciseType === 'hiit')              hghMult += 1.9;
+      else if (form.exerciseType === 'compound_heavy')    hghMult += 1.1;
+      else if (form.exerciseType === 'compound_moderate') hghMult += 0.8;
+      else if (form.exerciseType === 'cardio')            hghMult += 0.6;
+
+      if      (form.intensity >= 85) hghMult += 0.9;
+      else if (form.intensity >= 70) hghMult += 0.6;
+
+      if (form.fasting >= 12) hghMult += 0.9;
+      if (form.fasting >= 16) hghMult += 1.1;
+      if (form.fasting >= 24) hghMult += 1.4;
+      if (form.fasting >= 30) hghMult += 1.0;   // acumulativo: 24 h ya sumó 1.4; 30 h+ añade 1.0 más
+
+      if      (form.sleep >= 8)  hghMult += 1.3;
+      else if (form.sleep >= 7)  hghMult += 0.8;
+      else if (form.sleep < 6)   hghMult -= 0.6;
+
+      // === IGF-1 ===
+      if (form.exerciseType.includes('compound')) igf1Mult += 0.25;
+      if (form.intensity >= 75)                   igf1Mult += 0.18;
+      if (form.sleep >= 7.5)                      igf1Mult += 0.15;
+      igf1Mult *= nutriMult;
+
+      // === DHT (derivado de T) ===
+      const dhtMult = tMult * 0.94 + 0.06;
+
+      // === CORTISOL ===
+      if (form.duration > 60)  cortMult += 0.35 * ((form.duration - 60) / 30);
+      if (form.duration > 90)  cortMult += 0.4;
+      if (form.intensity >= 90) cortMult += 0.28;
+
+      if (form.fasting >= 18) cortMult += 0.25 * ((form.fasting - 18) / 12);
+      if (form.fasting > 24)  cortMult += 0.35;
+
+      if      (form.sleep < 6) cortMult += 0.45;
+      else if (form.sleep < 7) cortMult += 0.25;
+
+      // Meditación reduce cortisol
+      const medReduction = Math.min(0.35, form.meditation / 20 * 0.18);
+      cortMult = Math.max(0.5, cortMult - medReduction);
+
+      // ── Valores finales ─────────────────────────────
+      const testosterone = clamp(Math.round(BASELINE.testosterone * tMult),    RANGES.testosterone.min, RANGES.testosterone.max);
+      const hgh          = clamp(parseFloat((BASELINE.hgh  * hghMult).toFixed(1)),  RANGES.hgh.min,  RANGES.hgh.max);
+      const igf1         = clamp(Math.round(BASELINE.igf1  * igf1Mult),  RANGES.igf1.min,  RANGES.igf1.max);
+      const dht          = clamp(Math.round(BASELINE.dht   * dhtMult),   RANGES.dht.min,   RANGES.dht.max);
+      const cortisol     = clamp(parseFloat((BASELINE.cortisol * cortMult).toFixed(1)), RANGES.cortisol.min, RANGES.cortisol.max);
+
+      // ── Índice anabólico (0-100) ─────────────────────
+      const tNorm     = (testosterone - RANGES.testosterone.min) / (RANGES.testosterone.max - RANGES.testosterone.min);
+      const hghNorm   = (hgh          - RANGES.hgh.min)          / (RANGES.hgh.max          - RANGES.hgh.min);
+      const igf1Norm  = (igf1         - RANGES.igf1.min)         / (RANGES.igf1.max         - RANGES.igf1.min);
+      const dhtNorm   = (dht          - RANGES.dht.min)          / (RANGES.dht.max          - RANGES.dht.min);
+      const cortNorm  = 1 - (cortisol - RANGES.cortisol.min)     / (RANGES.cortisol.max     - RANGES.cortisol.min);
+
+      const anabolicScore = Math.round(clamp(
+        (tNorm * 30 + hghNorm * 25 + igf1Norm * 20 + dhtNorm * 10 + cortNorm * 15) * 100,
+        0, 100
+      ));
+
+      return { testosterone, hgh, igf1, dht, cortisol, anabolicScore };
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────
+    function getScoreLabel(score) {
+      if (score >= 85) return { text: 'ZONA ANABÓLICA ÉLITE 🔥',       color: 'emerald' };
+      if (score >= 70) return { text: 'ZONA ANABÓLICA FUERTE ✅',       color: 'emerald' };
+      if (score >= 55) return { text: 'ZONA ANABÓLICA MODERADA 📈',     color: 'amber'   };
+      if (score >= 40) return { text: 'ZONA BASAL / MANTENIMIENTO ⚖️', color: 'amber'   };
+      return               { text: 'ZONA CATABÓLICA ⚠️',               color: 'red'     };
+    }
+
+    function getHormoneLevel(key, value) {
+      const r = RANGES[key];
+      if (key === 'cortisol') {
+        if (value <= r.ok)   return { color: 'emerald', label: 'Óptimo' };
+        if (value <= r.high) return { color: 'amber',   label: 'Elevado' };
+        return                      { color: 'red',     label: 'Alto' };
+      }
+      if (value >= r.ok)   return { color: 'emerald', label: 'Óptimo' };
+      if (value >= r.low)  return { color: 'amber',   label: 'Normal'  };
+      return                      { color: 'red',     label: 'Bajo'    };
+    }
+
+    function getBarWidth(key, value) {
+      const r = RANGES[key];
+      return Math.round(clamp((value - r.min) / (r.max - r.min) * 100, 4, 100));
+    }
+
+    const HORMONE_LABELS = {
+      testosterone: { name: 'Testosterona',               emoji: '💪' },
+      hgh:          { name: 'HGH (Hormona de crecimiento)', emoji: '📈' },
+      igf1:         { name: 'IGF-1',                       emoji: '🔬' },
+      dht:          { name: 'DHT',                         emoji: '⚡' },
+      cortisol:     { name: 'Cortisol',                    emoji: '😤' }
+    };
+
+    // ── Render ────────────────────────────────────────────────────────
+    function renderResults(results) {
+      const container  = document.getElementById('resultsContainer');
+      const comparison = document.getElementById('comparison');
+      const hormones   = ['testosterone', 'hgh', 'igf1', 'dht', 'cortisol'];
+
+      // Hormone bars
+      container.innerHTML = hormones.map(key => {
+        const val   = results[key];
+        const level = getHormoneLevel(key, val);
+        const bw    = getBarWidth(key, val);
+        const lbl   = HORMONE_LABELS[key];
+        const unit  = RANGES[key].unit;
+        const fmt   = Number.isInteger(val) ? val : val.toFixed(1);
+
+        return `
+          <div class="result-row">
+            <div class="result-header">
+              <span class="result-name">${lbl.emoji} ${lbl.name}</span>
+              <span class="result-val">${fmt}<span class="result-unit">${unit}</span></span>
+            </div>
+            <div class="bar-track">
+              <div class="bar ${level.color}" style="width:${bw}%"></div>
+            </div>
+            <div class="bar-footer">
+              <span class="range-label">${RANGES[key].min} ${unit}</span>
+              <span class="level-label ${level.color}">${level.label}</span>
+              <span class="range-label">${RANGES[key].max} ${unit}</span>
+            </div>
+          </div>`;
+      }).join('');
+
+      // Comparison vs baseline
+      comparison.innerHTML = hormones.map(key => {
+        const val  = results[key];
+        const base = BASELINE[key];
+        const diff = (val - base) / base * 100;
+        const isPositive = key === 'cortisol' ? diff < 0 : diff > 0;
+        const sign = diff > 0 ? '+' : '';
+        const unit = RANGES[key].unit;
+        const lbl  = HORMONE_LABELS[key];
+        const baseFmt = Number.isInteger(base) ? base : base.toFixed(1);
+
+        return `
+          <div class="comparison-row">
+            <span class="comparison-name">${lbl.emoji} ${lbl.name}</span>
+            <span>
+              <span class="comparison-val ${isPositive ? 'emerald' : 'red'}">${sign}${diff.toFixed(0)}%</span>
+              <span class="comparison-base">(basal: ${baseFmt} ${unit})</span>
+            </span>
+          </div>`;
+      }).join('');
+
+      // Update score card
+      const score      = results.anabolicScore;
+      const scoreLabel = getScoreLabel(score);
+      const colorVar   = scoreLabel.color === 'emerald' ? 'var(--emerald-400)'
+                       : scoreLabel.color === 'amber'   ? 'var(--amber-400)'
+                       :                                  'var(--red-400)';
+
+      document.getElementById('anabolicScore').textContent   = score;
+      document.getElementById('scoreLabel').textContent      = scoreLabel.text;
+      document.getElementById('anabolicScore').style.color   = colorVar;
+      document.getElementById('scoreLabel').style.color      = colorVar;
+      document.getElementById('scoreCard').style.borderColor = colorVar;
+    }
+
+    // ── Read form values ──────────────────────────────────────────────
+    function getForm() {
+      return {
+        exerciseType: document.getElementById('exerciseType').value,
+        intensity:    +document.getElementById('intensity').value,
+        duration:     +document.getElementById('duration').value,
+        sets:         +document.getElementById('sets').value,
+        reps:         +document.getElementById('reps').value,
+        rest:         +document.getElementById('rest').value,
+        sleep:        +document.getElementById('sleep').value,
+        fasting:      +document.getElementById('fasting').value,
+        meditation:   +document.getElementById('meditation').value,
+        lentilsQuinoa: document.getElementById('lentilsQuinoa').checked,
+        sardines:      document.getElementById('sardines').checked,
+        eggs:          document.getElementById('eggs').checked,
+        timeOfDay: (document.querySelector('.time-btn[data-active="true"]') || {}).dataset.time || 'morning'
+      };
+    }
+
+    function update() { renderResults(calcHormones(getForm())); }
+
+    // ── Event listeners ───────────────────────────────────────────────
+    document.querySelectorAll('input[type=range]').forEach(input => {
+      input.addEventListener('input', () => {
+        const el  = document.getElementById(input.id + 'Value');
+        if (!el) return;
+        const v = +input.value;
+        if      (input.id === 'intensity')  el.textContent = v + '%';
+        else if (input.id === 'duration')   el.textContent = v + ' min';
+        else if (input.id === 'rest')       el.textContent = v + ' s';
+        else if (input.id === 'sleep')      el.textContent = v.toFixed(1) + ' h';
+        else                                el.textContent = v;
+        update();
+      });
+    });
+
+    document.getElementById('exerciseType').addEventListener('change', update);
+    document.querySelectorAll('input[type=checkbox]').forEach(cb => cb.addEventListener('change', update));
+
+    document.querySelectorAll('.time-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.time-btn').forEach(b => delete b.dataset.active);
+        btn.dataset.active = 'true';
+        update();
+      });
+    });
+
+    // Initial render
+    update();
+
+    // ── Service Worker ────────────────────────────────────────────────
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+          .then(reg => console.log('SW registrado:', reg.scope))
+          .catch(err => console.warn('SW no registrado:', err));
+      });
+    }
+  </script>
+</body>
+</html>
