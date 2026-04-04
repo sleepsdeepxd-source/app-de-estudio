@@ -49,8 +49,8 @@ self.addEventListener('fetch', event => {
       cache.match(event.request).then(cached => {
         const networkFetch = fetch(event.request)
           .then(response => {
-            // Guardar copia fresca en caché solo si la respuesta es válida
-            if (response && response.status === 200 && response.type !== 'opaque') {
+            // Guardar copia fresca en caché solo si la respuesta es válida (ok = 2xx)
+            if (response && response.ok) {
               cache.put(event.request, response.clone());
             }
             return response;

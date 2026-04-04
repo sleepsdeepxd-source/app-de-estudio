@@ -266,7 +266,7 @@
       if (form.fasting >= 12) hghMult += 0.9;
       if (form.fasting >= 16) hghMult += 1.1;
       if (form.fasting >= 24) hghMult += 1.4;
-      if (form.fasting >= 30) hghMult += 1.0;
+      if (form.fasting >= 30) hghMult += 1.0;   // acumulativo: 24 h ya sumó 1.4; 30 h+ añade 1.0 más
 
       if      (form.sleep >= 8)  hghMult += 1.3;
       else if (form.sleep >= 7)  hghMult += 0.8;
