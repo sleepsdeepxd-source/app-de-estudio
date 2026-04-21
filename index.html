@@ -594,6 +594,40 @@ body {
   </div>
 </div><!-- /sReport -->
 
+<!-- ════════ CÓDIGO ════════ -->
+<div id="sCode" class="screen">
+  <div class="page-hero">
+    <div class="eyebrow">Herramienta</div>
+    <div class="page-title">Editor de código</div>
+    <div class="page-sub">Pega tu HTML, CSS o JS y ejecútalo al instante.</div>
+  </div>
+  <div class="section" style="gap:12px;display:flex;flex-direction:column;">
+    <div class="section-label">Código fuente</div>
+    <textarea id="codeInput" spellcheck="false" style="
+      width:100%; min-height:200px; resize:vertical;
+      background:var(--s1); border:1px solid var(--border);
+      border-radius:var(--r); color:var(--text);
+      font-family:monospace; font-size:13px;
+      padding:14px; outline:none; line-height:1.5;
+    " placeholder="<!-- Pega aquí tu HTML / CSS / JS -->"></textarea>
+    <button id="runCodeBtn" class="btn" type="button" style="
+      background:var(--cyan); color:#000; padding:13px 24px;
+      font-size:15px; border-radius:var(--r); width:100%;
+    ">▶ Ejecutar</button>
+    <div class="section-label">Vista previa</div>
+    <iframe id="codePreview" style="
+      width:100%; height:380px;
+      border:1px solid var(--border); border-radius:var(--r);
+      background:#fff;
+    " sandbox="allow-scripts allow-same-origin"></iframe>
+    <button id="clearCodeBtn" class="btn" type="button" style="
+      background:transparent; border:1px solid var(--border);
+      color:var(--muted); padding:11px 24px;
+      font-size:13px; border-radius:var(--r); width:100%;
+    ">🗑 Limpiar</button>
+  </div>
+</div><!-- /sCode -->
+
 </div><!-- /app -->
 
 <!-- ════════ NAV ════════ -->
@@ -621,6 +655,13 @@ body {
       <line x1="16" y1="17" x2="8" y2="17"/>
     </svg>
     Informe
+  </button>
+  <button class="nb" data-screen="sCode" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="16 18 22 12 16 6"/>
+      <polyline points="8 6 2 12 8 18"/>
+    </svg>
+    Código
   </button>
 </nav>
 
@@ -765,6 +806,17 @@ function goTo(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.toggle('active', s.id === id));
   if (id === 'sReport') buildReport();
 }
+
+/* ─── CODE EDITOR ───────────────────── */
+$('runCodeBtn').addEventListener('click', () => {
+  const html = $('codeInput').value;
+  const frame = $('codePreview');
+  frame.srcdoc = html;
+});
+$('clearCodeBtn').addEventListener('click', () => {
+  $('codeInput').value = '';
+  $('codePreview').srcdoc = '';
+});
 
 /* ─── POMODORO STEPPER ──────────────── */
 $('pomMinus').addEventListener('click', () => {
